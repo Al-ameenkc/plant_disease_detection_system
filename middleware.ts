@@ -23,6 +23,12 @@ export async function middleware(request: NextRequest) {
     }
     return NextResponse.next();
   }
+  if (pathname === "/welcome") {
+    if (authenticated) {
+      return NextResponse.redirect(new URL("/", request.url));
+    }
+    return NextResponse.next();
+  }
 
   if (pathname.startsWith("/api/auth/login")) {
     return NextResponse.next();
@@ -35,14 +41,14 @@ export async function middleware(request: NextRequest) {
         { status: 503 }
       );
     }
-    return NextResponse.redirect(new URL("/login", request.url));
+    return NextResponse.redirect(new URL("/welcome", request.url));
   }
 
   if (!authenticated) {
     if (pathname.startsWith("/api/")) {
       return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
     }
-    const login = new URL("/login", request.url);
+    const login = new URL("/welcome", request.url);
     login.searchParams.set("from", pathname);
     return NextResponse.redirect(login);
   }

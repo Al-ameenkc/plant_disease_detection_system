@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Leaf, LayoutDashboard, Camera, History, LogOut } from "lucide-react";
+import { Leaf, LayoutDashboard, Camera, History, BarChart3, LogOut } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 
@@ -10,6 +10,7 @@ const links = [
   { href: "/", label: "Dashboard", icon: LayoutDashboard },
   { href: "/capture", label: "Analyze", icon: Camera },
   { href: "/history", label: "History", icon: History },
+  { href: "/analytics", label: "Analytics", icon: BarChart3 },
 ];
 
 export function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
@@ -26,7 +27,7 @@ export function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
       <div className="min-h-0 flex-1 overflow-y-auto">
         <div className="p-4 sm:p-6 flex items-center space-x-3 mb-2">
           <div className="bg-green-100 p-2 rounded-lg shrink-0">
-            <Leaf className="w-6 h-6 text-primary" />
+            <Leaf className="w-7 h-7 text-primary" />
           </div>
           <div className="min-w-0">
             <h1 className="text-lg sm:text-xl font-bold text-gray-900 leading-tight truncate">AgriScan</h1>
@@ -49,7 +50,7 @@ export function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
                       : "text-gray-600 hover:bg-green-50 hover:text-green-700"
                   )}
                 >
-                  <Icon className="w-5 h-5 shrink-0" />
+                  <Icon className="w-6 h-6 shrink-0" />
                   <span>{link.label}</span>
                 </div>
               </Link>

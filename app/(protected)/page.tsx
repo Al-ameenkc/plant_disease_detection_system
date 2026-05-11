@@ -2,38 +2,24 @@
 
 import { useMemo, type ComponentType } from "react";
 import Header from "@/components/Header";
-import { useStatistics } from "@/hooks/use-detections";
+import { useDetections, useStatistics } from "@/hooks/use-detections";
 import type { Detection } from "@/types/schema";
 import { Card, CardContent } from "@/components/ui/card";
-import { Scan, Sprout, Bug, Activity, BarChart3 } from "lucide-react";
+import { Scan, Sprout, Bug, Activity, TrendingUp } from "lucide-react";
 import {
-  Bar,
-  BarChart,
   CartesianGrid,
-  Cell,
   Legend,
   Line,
   LineChart,
-  Pie,
-  PieChart,
   ResponsiveContainer,
   Tooltip,
   XAxis,
   YAxis,
 } from "recharts";
 
-const HEALTH_MIX_COLORS: Record<string, string> = {
-  Healthy: "#10b981",
-  Infected: "#ef4444",
-  "Not a crop image": "#64748b",
-};
-
 export default function Dashboard() {
   const { data: stats } = useStatistics();
-
-  const healthData = stats?.healthDistribution ?? [];
-  const diseaseData = stats?.diseaseBreakdown ?? [];
-  const trendData = stats?.scansOverTime ?? [];
+  const { data: detections = [] } = useDetections();
 
   const total = stats?.totalScans ?? 0;
   const healthy = stats?.healthyPlants ?? 0;
@@ -57,10 +43,32 @@ export default function Dashboard() {
   }, [total, healthy, infected, topName, topCount]);
 
   const recentAlerts = useMemo(() => (stats?.recentDetections ?? []).slice(0, 5), [stats?.recentDetections]);
+  const dailyTrend = useMemo(() => {
+    const byDay = new Map<string, { healthy: number; infected: number }>();
+    for (const detection of detections) {
+      if (!detection.createdAt) continue;
+      const key = new Date(detection.createdAt).toISOString().slice(0, 10);
+      const row = byDay.get(key) ?? { healthy: 0, infected: 0 };
+      if (detection.diseaseName === "Healthy") {
+        row.healthy += 1;
+      } else {
+        row.infected += 1;
+      }
+      byDay.set(key, row);
+    }
+    return Array.from(byDay.entries())
+      .sort((a, b) => a[0].localeCompare(b[0]))
+      .slice(-10)
+      .map(([date, values]) => ({
+        date,
+        healthy: values.healthy,
+        infected: values.infected,
+      }));
+  }, [detections]);
 
   return (
     <div className="min-h-full pb-6 sm:pb-8">
-      <Header title="Farm Overview" subtitle="Live metrics from your detection history." />
+      <Header title="Farm Overview" subtitle="Welcome back to the monitoring dashboard." />
 
       <div className="px-4 pt-2 sm:px-6 lg:px-8">
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 sm:gap-5 xl:grid-cols-4 mb-6">
@@ -102,138 +110,66 @@ export default function Dashboard() {
           <div className="space-y-6 xl:col-span-2">
             <Card className="border-gray-200">
               <CardContent className="p-4 sm:p-6">
-                <div className="flex items-start gap-3 mb-6">
-                  <div className="p-2 rounded-lg bg-violet-50 text-violet-600">
-                    <BarChart3 className="w-5 h-5" />
+                <div className="mb-5 flex items-start gap-3">
+                  <div className="rounded-lg bg-emerald-50 p-2 text-emerald-700">
+                    <TrendingUp className="h-5 w-5" />
                   </div>
                   <div>
-                    <h2 className="text-lg font-bold text-gray-900">Analytics</h2>
-                    <p className="text-sm text-gray-500 mt-0.5">
-                      Charts update from the same Supabase detection records as the summary cards.
-                    </p>
+                    <h2 className="text-lg font-bold text-gray-900">Daily Detection Trend</h2>
+                    <p className="mt-0.5 text-sm text-gray-500">Infected vs healthy detections per day</p>
                   </div>
                 </div>
-
-                <div className="grid grid-cols-1 gap-6 lg:grid-cols-2 mb-6">
-                  <div className="min-w-0">
-                    <h3 className="text-sm font-semibold text-gray-700 mb-3">Plant health mix</h3>
-                    <div className="h-[220px] w-full sm:h-[260px]">
-                      {healthData.some((d) => d.value > 0) ? (
-                        <ResponsiveContainer width="100%" height="100%">
-                          <PieChart>
-                            <Pie
-                              data={healthData}
-                              dataKey="value"
-                              nameKey="name"
-                              cx="50%"
-                              cy="50%"
-                              innerRadius={52}
-                              outerRadius={88}
-                              paddingAngle={2}
-                            >
-                              {healthData.map((entry) => (
-                                <Cell
-                                  key={entry.name}
-                                  fill={HEALTH_MIX_COLORS[entry.name] ?? "#94a3b8"}
-                                />
-                              ))}
-                            </Pie>
-                            <Tooltip
-                              formatter={(value: number) => [value, "Scans"]}
-                              contentStyle={{
-                                borderRadius: "8px",
-                                border: "1px solid #e5e7eb",
-                              }}
-                            />
-                            <Legend />
-                          </PieChart>
-                        </ResponsiveContainer>
-                      ) : (
-                        <EmptyChart label="No scan data yet." />
-                      )}
-                    </div>
-                  </div>
-
-                  <div className="min-w-0">
-                    <h3 className="text-sm font-semibold text-gray-700 mb-3">
-                      Infections by disease
-                    </h3>
-                    <div className="h-[220px] w-full sm:h-[260px]">
-                      {diseaseData.length > 0 ? (
-                        <ResponsiveContainer width="100%" height="100%">
-                          <BarChart
-                            data={diseaseData}
-                            margin={{ top: 8, right: 8, left: -8, bottom: 0 }}
-                          >
-                            <CartesianGrid strokeDasharray="3 3" className="stroke-gray-200" />
-                            <XAxis
-                              dataKey="name"
-                              tick={{ fontSize: 11 }}
-                              interval={0}
-                              angle={-28}
-                              textAnchor="end"
-                              height={72}
-                            />
-                            <YAxis tick={{ fontSize: 11 }} allowDecimals={false} />
-                            <Tooltip
-                              formatter={(value: number) => [value, "Detections"]}
-                              contentStyle={{
-                                borderRadius: "8px",
-                                border: "1px solid #e5e7eb",
-                              }}
-                            />
-                            <Bar dataKey="count" fill="#8b5cf6" radius={[4, 4, 0, 0]} />
-                          </BarChart>
-                        </ResponsiveContainer>
-                      ) : (
-                        <EmptyChart label="No infected plant records yet." />
-                      )}
-                    </div>
-                  </div>
-                </div>
-
-                <div>
-                  <h3 className="text-sm font-semibold text-gray-700 mb-3">Scans over time</h3>
-                  <div className="h-[240px] w-full min-w-0 sm:h-[280px]">
-                    {trendData.length > 0 ? (
-                      <ResponsiveContainer width="100%" height="100%">
-                        <LineChart data={trendData} margin={{ top: 8, right: 16, left: 0, bottom: 0 }}>
-                          <CartesianGrid strokeDasharray="3 3" className="stroke-gray-200" />
-                          <XAxis
-                            dataKey="date"
-                            tick={{ fontSize: 11 }}
-                            tickFormatter={(d) =>
-                              new Date(d + "T12:00:00").toLocaleDateString(undefined, {
-                                month: "short",
-                                day: "numeric",
-                              })
-                            }
-                          />
-                          <YAxis tick={{ fontSize: 11 }} allowDecimals={false} />
-                          <Tooltip
-                            labelFormatter={(d) =>
-                              new Date(String(d) + "T12:00:00").toLocaleDateString()
-                            }
-                            formatter={(value: number) => [value, "Scans"]}
-                            contentStyle={{
-                              borderRadius: "8px",
-                              border: "1px solid #e5e7eb",
-                            }}
-                          />
-                          <Line
-                            type="monotone"
-                            dataKey="count"
-                            stroke="#2563eb"
-                            strokeWidth={2}
-                            dot={{ r: 3, fill: "#2563eb" }}
-                            activeDot={{ r: 5 }}
-                          />
-                        </LineChart>
-                      </ResponsiveContainer>
-                    ) : (
-                      <EmptyChart label="No timeline data yet." />
-                    )}
-                  </div>
+                <div className="h-[240px] w-full min-w-0 sm:h-[280px]">
+                  {dailyTrend.length > 0 ? (
+                    <ResponsiveContainer width="100%" height="100%">
+                      <LineChart data={dailyTrend} margin={{ top: 6, right: 12, left: -8, bottom: 0 }}>
+                        <CartesianGrid strokeDasharray="3 3" className="stroke-gray-200" />
+                        <XAxis
+                          dataKey="date"
+                          tick={{ fontSize: 11, fill: "#64748b" }}
+                          tickFormatter={(d) =>
+                            new Date(`${String(d)}T12:00:00`).toLocaleDateString(undefined, {
+                              month: "short",
+                              day: "numeric",
+                            })
+                          }
+                        />
+                        <YAxis allowDecimals={false} tick={{ fontSize: 11, fill: "#64748b" }} />
+                        <Tooltip
+                          labelFormatter={(d) =>
+                            new Date(`${String(d)}T12:00:00`).toLocaleDateString()
+                          }
+                          contentStyle={{ borderRadius: "10px", border: "1px solid #e5e7eb" }}
+                        />
+                        <Legend
+                          iconType="circle"
+                          formatter={(value) => (
+                            <span className="text-xs font-medium text-gray-600">{value}</span>
+                          )}
+                        />
+                        <Line
+                          type="monotone"
+                          dataKey="infected"
+                          name="Infected"
+                          stroke="#ef4444"
+                          strokeWidth={2.5}
+                          dot={{ r: 3.5, fill: "#ef4444" }}
+                          activeDot={{ r: 5 }}
+                        />
+                        <Line
+                          type="monotone"
+                          dataKey="healthy"
+                          name="Healthy"
+                          stroke="#22c55e"
+                          strokeWidth={2.5}
+                          dot={{ r: 3.5, fill: "#22c55e" }}
+                          activeDot={{ r: 5 }}
+                        />
+                      </LineChart>
+                    </ResponsiveContainer>
+                  ) : (
+                    <EmptyChart label="No trend data yet. Run analyses to build your daily chart." />
+                  )}
                 </div>
               </CardContent>
             </Card>
@@ -284,8 +220,8 @@ function StatCard({
             <Icon className="w-4 h-4" />
           </div>
         </div>
-        <h3 className="text-2xl font-bold text-gray-900 leading-tight tabular-nums sm:text-3xl">{value}</h3>
-        {footnote && <p className="mt-2 text-xs text-gray-500 leading-snug">{footnote}</p>}
+        <h3 className="text-2xl font-bold text-value-green leading-tight tabular-nums sm:text-3xl">{value}</h3>
+        {footnote && <p className="mt-2 text-xs text-subtle-green leading-snug">{footnote}</p>}
       </CardContent>
     </Card>
   );
@@ -294,7 +230,7 @@ function StatCard({
 function EmptyChart({ label }: { label: string }) {
   return (
     <div className="h-full min-h-[200px] flex items-center justify-center rounded-xl border border-dashed border-gray-200 bg-gray-50/80">
-      <p className="text-sm text-gray-500 px-4 text-center">{label}</p>
+      <p className="text-sm text-subtle-green px-4 text-center">{label}</p>
     </div>
   );
 }
@@ -318,15 +254,15 @@ function AlertRow({ d }: { d: Detection }) {
   return (
     <div className="flex items-start gap-3">
       <div className={`p-2 rounded-lg ${palette.bg} ${palette.fg} shrink-0`}>
-        <Icon className="w-4 h-4" />
+        <Icon className="w-5 h-5" />
       </div>
       <div className="flex-1 min-w-0">
         <p className="font-semibold text-gray-900 text-sm truncate">{d.diseaseName}</p>
-        <p className="text-xs text-gray-500">
+        <p className="text-xs text-subtle-green">
           {d.plantType} • {d.growthStage} • {Math.round((d.confidence || 0) * 100)}% confidence
         </p>
       </div>
-      <span className="text-xs text-gray-400 shrink-0">{time}</span>
+      <span className="text-xs text-subtle-green shrink-0">{time}</span>
     </div>
   );
 }

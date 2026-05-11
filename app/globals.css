@@ -43,4 +43,29 @@
   body {
     @apply bg-background text-foreground font-sans;
   }
+  h1,
+  h2,
+  h3,
+  h4 {
+    color: #14532d;
+  }
+}
+
+@layer utilities {
+  .text-subtle-green {
+    color: #4b7b61;
+  }
+
+  .text-value-green {
+    color: #14532d;
+  }
+}
+
+@keyframes grow {
+  from {
+    transform: scaleX(0);
+  }
+  to {
+    transform: scaleX(1);
+  }
 }

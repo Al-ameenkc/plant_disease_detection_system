@@ -83,7 +83,7 @@ export default function Capture() {
 
       <div className="grid grid-cols-1 gap-6 px-4 pt-2 sm:px-6 lg:grid-cols-5 lg:gap-6 lg:px-8">
         <div className="space-y-4 sm:space-y-5 lg:col-span-3">
-          <div className="relative rounded-2xl overflow-hidden bg-gray-900 aspect-video shadow-sm border border-gray-200">
+          <div className="relative overflow-hidden rounded-2xl border border-emerald-200 bg-emerald-900 aspect-video shadow-sm">
             {previewSrc ? (
               <>
                 {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -102,16 +102,16 @@ export default function Capture() {
               <button
                 type="button"
                 onClick={() => fileInputRef.current?.click()}
-                className="flex h-full min-h-[200px] w-full flex-col items-center justify-center gap-3 bg-gray-800 px-6 py-8 text-center transition-colors hover:bg-gray-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-white/40"
+                className="flex h-full min-h-[200px] w-full flex-col items-center justify-center gap-3 bg-emerald-800 px-6 py-8 text-center transition-colors hover:bg-emerald-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-white/40"
               >
-                <ImageIcon className="h-12 w-12 text-gray-500" aria-hidden />
+                <ImageIcon className="h-12 w-12 text-emerald-200/80" aria-hidden />
                 <div>
                   <p className="text-sm font-semibold text-white">No image selected</p>
-                  <p className="mt-1 text-xs text-gray-400 leading-relaxed max-w-xs mx-auto">
+                  <p className="mt-1 max-w-xs mx-auto text-xs leading-relaxed text-emerald-100/80">
                     Upload a photo of crop tissue for disease analysis.
                   </p>
                 </div>
-                <span className="inline-flex items-center gap-2 rounded-full bg-white/10 px-4 py-2 text-xs font-semibold text-white">
+                <span className="inline-flex items-center gap-2 rounded-full bg-emerald-500/25 px-4 py-2 text-xs font-semibold text-white">
                   <UploadCloud className="h-4 w-4" />
                   Choose image
                 </span>
