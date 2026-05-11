@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { LayoutDashboard, Camera, History, BarChart3 } from "lucide-react";
@@ -14,6 +15,17 @@ const mobileLinks = [
 ];
 
 export default function ProtectedShell({ children }: { children: React.ReactNode }) {
+  useEffect(() => {
+    const onPageShow = (event: PageTransitionEvent) => {
+      // Force a fresh auth check when browser restores a cached protected page.
+      if (event.persisted) {
+        window.location.reload();
+      }
+    };
+    window.addEventListener("pageshow", onPageShow);
+    return () => window.removeEventListener("pageshow", onPageShow);
+  }, []);
+
   return (
     <div className="flex min-h-[100dvh] flex-col bg-background text-foreground lg:h-screen lg:flex-row lg:overflow-hidden">
       <Sidebar />

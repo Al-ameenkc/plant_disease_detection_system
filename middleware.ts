@@ -6,6 +6,13 @@ import {
   verifySessionToken,
 } from "@/lib/auth-token";
 
+function noStore(response: NextResponse) {
+  response.headers.set("Cache-Control", "no-store, no-cache, must-revalidate, max-age=0");
+  response.headers.set("Pragma", "no-cache");
+  response.headers.set("Expires", "0");
+  return response;
+}
+
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
@@ -21,13 +28,13 @@ export async function middleware(request: NextRequest) {
     if (authenticated) {
       return NextResponse.redirect(new URL("/", request.url));
     }
-    return NextResponse.next();
+    return noStore(NextResponse.next());
   }
   if (pathname === "/welcome") {
     if (authenticated) {
       return NextResponse.redirect(new URL("/", request.url));
     }
-    return NextResponse.next();
+    return noStore(NextResponse.next());
   }
 
   if (pathname.startsWith("/api/auth/login")) {
@@ -53,7 +60,7 @@ export async function middleware(request: NextRequest) {
     return NextResponse.redirect(login);
   }
 
-  return NextResponse.next();
+  return noStore(NextResponse.next());
 }
 
 export const config = {
